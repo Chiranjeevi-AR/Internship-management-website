@@ -1,0 +1,1 @@
+cd internmanageapp/internmanageapp && npm start

@@ -1,0 +1,165 @@
+[1mdiff --git a/.gitignore b/.gitignore[m
+[1mindex 71273322..ba477b34 100644[m
+Binary files a/.gitignore and b/.gitignore differ
+[1mdiff --git a/backend/controllers/assignmentsController.js b/backend/controllers/assignmentsController.js[m
+[1mindex a1e2a787..983c5de7 100644[m
+[1m--- a/backend/controllers/assignmentsController.js[m
+[1m+++ b/backend/controllers/assignmentsController.js[m
+[36m@@ -139,10 +139,6 @@[m [mexports.downloadFile = async (req, res) => {[m
+             assignment.submission?.fileName || assignment.fileName :[m
+             assignment.fileName;[m
+         [m
+[31m-        console.log('Download request - fileUrl:', fileUrl);[m
+[31m-        console.log('Download request - fileName:', fileName);[m
+[31m-        console.log('Download request - type:', req.query.type);[m
+[31m-        [m
+         if (!fileUrl) {[m
+             return res.status(404).json({[m
+                 success: false,[m
+[36m@@ -159,29 +155,19 @@[m [mexports.downloadFile = async (req, res) => {[m
+             filePath = path.resolve(__dirname, '..', fileUrl);[m
+         }[m
+         [m
+[31m-        console.log('Resolved file path:', filePath);[m
+[31m-        [m
+[31m-        // Check if file exists[m
+         if (!fs.existsSync(filePath)) {[m
+[31m-            console.error('File not found at path:', filePath);[m
+             return res.status(404).json({[m
+                 success: false,[m
+                 message: 'File not found on server'[m
+             });[m
+         }[m
+ [m
+[31m-        // Get file stats for additional info[m
+         const stats = fs.statSync(filePath);[m
+[31m-        console.log('File stats:', { size: stats.size, isFile: stats.isFile() });[m
+ [m
+[31m-        // Use the stored fileType instead of trying to extract from path[m
+         const fileType = req.query.type === 'submission' ? [m
+             (assignment.submission?.fileType || assignment.fileType) : [m
+             assignment.fileType;[m
+         [m
+[31m-        console.log('File type from DB:', fileType);[m
+[31m-        console.log('Original fileName:', fileName);[m
+[31m-        [m
+         // Set content type based on stored file type[m
+         let contentType = 'application/octet-stream';[m
+         [m
+[36m@@ -211,21 +197,13 @@[m [mexports.downloadFile = async (req, res) => {[m
+             const baseFileName = fileName ? path.parse(fileName).name : 'assignment';[m
+             downloadFileName = baseFileName + fileExtension;[m
+         }[m
+[31m-[m
+[31m-        console.log('Content-Type:', contentType);[m
+[31m-        console.log('Download filename:', downloadFileName);[m
+[31m-        console.log('File extension used:', fileExtension);[m
+[31m-[m
+[31m-        // Set appropriate headers[m
+         res.setHeader('Content-Type', contentType);[m
+         res.setHeader('Content-Disposition', `attachment; filename="${downloadFileName}"`);[m
+         res.setHeader('Content-Length', stats.size);[m
+         res.setHeader('Cache-Control', 'no-cache');[m
+         [m
+[31m-        // Send the file[m
+         const fileStream = fs.createReadStream(filePath);[m
+         fileStream.on('error', (error) => {[m
+[31m-            console.error('File stream error:', error);[m
+             if (!res.headersSent) {[m
+                 res.status(500).json({[m
+                     success: false,[m
+[36m@@ -295,8 +273,6 @@[m [mexports.getInternAssignments = async (req, res) => {[m
+             .populate('projectId', 'name')[m
+             .sort('-createdAt');[m
+ [m
+[31m-        console.log('Assignments data for intern:', JSON.stringify(assignments, null, 2));[m
+[31m-[m
+         res.status(200).json({[m
+             success: true,[m
+             data: assignments[m
+[1mdiff --git a/backend/controllers/authController.js b/backend/controllers/authController.js[m
+[1mindex 8bb38787..53fc7279 100644[m
+[1m--- a/backend/controllers/authController.js[m
+[1m+++ b/backend/controllers/authController.js[m
+[36m@@ -87,7 +87,6 @@[m [mexports.signin = async (req, res) => {[m
+ [m
+ 		// check if intern period is over or not [m
+ 		if (existingUser.type === 'intern' && existingUser.endDate && new Date(existingUser.endDate) < new Date()) {[m
+[31m-			console.log(" intern over !")[m
+ 			existingUser.type = 'candidate';[m
+ 			await existingUser.save();[m
+ 		}[m
+[36m@@ -644,11 +643,7 @@[m [mexports.approveUser = async (req, res) => {[m
+ 				subject: 'Your TallyIntern Account is Approved!', // Updated subject[m
+ 				html: emailHtml,[m
+ 			});[m
+[31m-			console.log('Approval email sent to:', userToApprove.email);[m
+ 		} catch (emailError) {[m
+[31m-			console.error("Failed to send approval email:", emailError);[m
+[31m-			// Decide if you want to return an error to the client or just log it[m
+[31m-			// For now, we'll just log it and proceed with the success response for approval[m
+ 		}[m
+ [m
+ 		// Prepare the response, excluding sensitive data[m
+[1mdiff --git a/backend/controllers/projectAssignmentsController.js b/backend/controllers/projectAssignmentsController.js[m
+[1mindex 7a77722b..df0848df 100644[m
+[1m--- a/backend/controllers/projectAssignmentsController.js[m
+[1m+++ b/backend/controllers/projectAssignmentsController.js[m
+[36m@@ -27,10 +27,7 @@[m [masync function sendProjectAssignmentEmail(userEmail, userName, projectName, assi[m
+ [m
+   try {[m
+     await mailTransport.sendMail(mailOptions);[m
+[31m-    console.log(`Project assignment email sent to ${userEmail}`);[m
+   } catch (error) {[m
+[31m-    console.error('Error sending project assignment email:', error);[m
+[31m-    // Decide if this error should be propagated or just logged[m
+   }[m
+ }[m
+ [m
+[36m@@ -693,58 +690,64 @@[m [mexports.removeUserFromProject = async (req, res) => {[m
+ // Get project assignments for a specific developer[m
+ exports.getProjectAssignmentsByDeveloper = async (req, res) => {[m
+   try {[m
+[31m-    const developerId = req.params.developerId;[m
+[32m+[m[32m    const { developerId } = req.params;[m
+ [m
+[31m-    // Find all project assignments where the developer is either assigned or is a panelist[m
+[32m+[m[32m    // Find assignments where the developer is assigned as mentor or panelist[m
+     const assignments = await ProjectAssignment.find({[m
+       $or: [[m
+         { 'assignedDevelopers.userId': developerId },[m
+         { 'panelists.userId': developerId }[m
+       ][m
+     })[m
+[31m-    .populate('projectId', 'name description company')[m
+[31m-    .populate('assignedInterns.userId', 'name email type')[m
+[31m-    .lean();[m
+[32m+[m[32m    .populate('projectId', 'name description company estimatedTimeToComplete')[m
+[32m+[m[32m    .populate('assignedInterns.userId', 'name email type company')[m
+[32m+[m[32m    .populate('assignedDevelopers.userId', 'name email type company')[m
+[32m+[m[32m    .populate('panelists.userId', 'name email type company');[m
+ [m
+     if (!assignments || assignments.length === 0) {[m
+[31m-      return res.status(200).json({[m
+[31m-        success: true,[m
+[31m-        message: 'No project assignments found for this developer',[m
+[31m-        data: [][m
+[32m+[m[32m      return res.status(200).json({[m[41m [m
+[32m+[m[32m        success: true,[m[41m [m
+[32m+[m[32m        data: [],[m
+[32m+[m[32m        message: 'No project assignments found for this developer'[m
+       });[m
+     }[m
+ [m
+[31m-    // Transform the data for frontend consumption[m
+[31m-    const transformedAssignments = assignments.map(assignment => {[m
+[31m-      const developerRole = assignment.panelists?.some(p => p.userId.toString() === developerId) [m
+[31m-        ? 'Panelist' [m
+[31m-        : 'Mentor';[m
+[32m+[m[32m    // Transform the data to include role information[m
+[32m+[m[32m    const transformedAssignments = assignments[m
+[32m+[m[32m      .filter(assignment => assignment.projectId) // Filter out assignments without valid project data[m
+[32m+[m[32m      .map(assignment => {[m
+[32m+[m[32m        const roles = [];[m
+[32m+[m[41m        [m
+[32m+[m[32m        //

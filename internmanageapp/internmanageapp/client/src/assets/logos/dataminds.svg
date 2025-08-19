@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <rect width="200" height="200" fill="#10b981"/>
+  <text x="100" y="120" font-family="Arial" font-size="28" fill="white" text-anchor="middle">
+    DataMinds
+  </text>
+  <circle cx="100" cy="70" r="30" fill="white" opacity="0.8"/>
+  <path d="M70,70 L130,70" stroke="white" stroke-width="4"/>
+</svg> 

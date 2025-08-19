@@ -1,0 +1,6 @@
+.env
+node_modules
+migrate-projects.js
+migrate-to-atlas.js
+test-data.js
+create-backup.js
